@@ -1,0 +1,88 @@
+@import '@fontsource-variable/dm-sans';
+@import 'tailwindcss';
+
+/* Accent ladder sheet (dealt): one raspberry hue full-strength on small marks,
+   its pale tints on areas; ground lifted one level toward the family (face choice). */
+@theme {
+  --color-ground: #fbf7f8;
+  --color-surface: #ffffff;
+  --color-raised: #f3f4f6;
+  --color-line: #e5e7eb;
+  --color-control: #d1d5db;
+  --color-ink: #111827;
+  --color-muted: #5f6672;
+  --color-accent: #b8336a;
+  --color-accent-soft: #fdf2f7;
+  --color-accent-track: #f8dbe8;
+  --color-accent-ink: #6b1d3e;
+  --color-ok: #247b50;
+  --color-ok-soft: #dcfce7;
+  --color-ok-ink: #14532d;
+  --color-bad: #c4242a;
+  --color-bad-soft: #ffedea;
+  --color-bad-ink: #831c1e;
+
+  --radius-card: 8px;
+  --radius-control: 6px;
+
+  --font-sans: 'DM Sans Variable', 'DM Sans', Inter, system-ui, sans-serif;
+
+  --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Motion language: arrive from the screen's own axis, pop only when a state
+   lands (lock-in, copy, score, verdict) — the world's flat finish stays flat. */
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes mark-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.view-in {
+  animation: view-in 0.3s var(--ease-soft) both;
+}
+.mark-pop {
+  animation: mark-pop 0.35s var(--ease-soft) both;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* The page face is the dealt ground (lifted one step toward the raspberry family). */
+body {
+  background-color: var(--color-ground);
+}
+
+/* The waiting pulse is non-essential motion; the status text already carries the waiting state. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .view-in,
+  .mark-pop {
+    animation: none;
+  }
+}
+
+/* Browser chrome carries the design too: tap feedback lives in the controls
+   (scale + color on :active), so the gray flash is off. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background-color: var(--color-accent-track);
+  color: var(--color-accent-ink);
+}

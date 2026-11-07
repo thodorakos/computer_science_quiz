@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.wrangler/
+.aws/
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+!.env.example
+!.dev.vars.example
+test-results/
+playwright-report/
+.playwright-mcp/
+*.log

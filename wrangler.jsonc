@@ -1,0 +1,21 @@
+{
+  "name": "quiz-duel",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-11-07",
+  "kv_namespaces": [{ "binding": "QUIZ_KV" }],
+  "ratelimits": [
+    { "name": "API_RATE_LIMITER", "namespace_id": "93741001", "simple": { "limit": 300, "period": 60 } },
+    { "name": "CREATE_RATE_LIMITER", "namespace_id": "93741002", "simple": { "limit": 10, "period": 60 } },
+    { "name": "WRITE_RATE_LIMITER", "namespace_id": "93741003", "simple": { "limit": 120, "period": 60 } }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "invocation_logs": false },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 }
+  },
+  "assets": {
+    "directory": "./dist/client",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  }
+}
