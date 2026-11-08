@@ -1,15 +1,23 @@
 import { questions } from './questions'
 
-export type GameMode = 20 | 50 | 100
+export type GameMode = number
+export const MIN_QUESTIONS = 10
+export const MAX_QUESTIONS = 600
+export const SKIP_ANSWER = -1
+export const CORRECT_POINTS = 1
+export const WRONG_POINTS = -0.25
 
-const MODE_CONFIG: Record<GameMode, { easy: number; mid: number; hard: number }> = {
-  20: { easy: 7, mid: 7, hard: 6 },
-  50: { easy: 17, mid: 17, hard: 16 },
-  100: { easy: 34, mid: 33, hard: 33 },
+export const isGameMode = (value: unknown): value is GameMode =>
+  typeof value === 'number' && Number.isInteger(value) && value >= MIN_QUESTIONS && value <= MAX_QUESTIONS
+
+// Each 200-question batch has 67 easy, 67 mid and 66 hard questions.
+export function getModeConfig(mode: GameMode) {
+  const hard = Math.min(Math.floor(mode / 3), 198)
+  return { easy: Math.ceil((mode - hard) / 2), mid: Math.floor((mode - hard) / 2), hard }
 }
 
 export function getQuestionsForMode(mode: GameMode) {
-  const { easy, mid, hard } = MODE_CONFIG[mode]
+  const { easy, mid, hard } = getModeConfig(mode)
 
   const shuffle = <T>(items: T[]) => {
     const result = [...items]
@@ -20,10 +28,8 @@ export function getQuestionsForMode(mode: GameMode) {
     return result
   }
   return shuffle([
-    ...shuffle(questions.slice(0, 67)).slice(0, easy),
-    ...shuffle(questions.slice(67, 134)).slice(0, mid),
-    ...shuffle(questions.slice(134)).slice(0, hard),
+    ...shuffle(questions.filter((_, i) => i % 200 < 67)).slice(0, easy),
+    ...shuffle(questions.filter((_, i) => i % 200 >= 67 && i % 200 < 134)).slice(0, mid),
+    ...shuffle(questions.filter((_, i) => i % 200 >= 134)).slice(0, hard),
   ])
 }
-
-export const getModeConfig = (mode: GameMode) => MODE_CONFIG[mode]

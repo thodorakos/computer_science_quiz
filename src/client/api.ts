@@ -1,6 +1,7 @@
 import { hc } from 'hono/client'
 import type { AppType } from '../worker'
 import type { PublicQuestion } from '../shared/question'
+import type { GameMode } from '../shared/game-config'
 import { GAME_ID_PATTERN, PLAYER_TOKEN_PATTERN } from '../shared/security'
 
 export const client = hc<AppType>('/')
@@ -10,7 +11,7 @@ export type PlayerValue = { name: string; score: number | null; done: boolean; q
 export type Game = { p1: PlayerValue | null; p2: PlayerValue | null }
 
 export type Identity = { id: string; slot: Slot; name: string; token: string }
-export type GameMode = 20 | 50 | 100
+export type { GameMode } from '../shared/game-config'
 
 const IDENTITY_KEY = 'quiz-duel'
 

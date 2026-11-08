@@ -10,10 +10,12 @@ Speed matters here. Answers arrive before the next reaction blink. That's the po
 
 ## How It Works
 
-1. Create a game → Share the link
+1. Choose 10–600 questions, create a game → Share the link
 2. Players join with auto-generated tokens → Game starts automatically
 3. Race each other → Submit answers instantly
 4. Live scoreboard updates in real-time
+
+Scoring: +1 for a correct answer, −0.25 for a wrong answer, and 0 for “Don’t know.” Skipping reveals the correct answer and advances the quiz. Scores can go below zero.
 
 Stack: Hono for the backend, React on the frontend, Cloudflare KV for storage.
 

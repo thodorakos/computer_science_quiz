@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import type { PublicQuestion } from '../shared/question'
-import type { GameMode } from '../shared/game-config'
+import { isGameMode, MIN_QUESTIONS, MAX_QUESTIONS, SKIP_ANSWER } from '../shared/game-config'
 import {
   createGame,
   clearIdentity,
@@ -150,13 +150,17 @@ function Home({ onPlay }: { onPlay: (identity: Identity) => void }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [created, setCreated] = useState<Identity | null>(null)
-  const [mode, setMode] = useState<GameMode>(20)
+  const [mode, setMode] = useState('20')
+  const count = Number(mode)
+  const countId = useId()
 
   async function submit(event: FormEvent) {
     event.preventDefault()
+    if (!isGameMode(count)) return
+    if (!name.trim()) { setError('Enter your name to create a duel.'); return }
     setBusy(true)
     setError('')
-    const result = await createGame(name, mode)
+    const result = await createGame(name, count)
     setBusy(false)
     if ('error' in result) {
       setError(result.error)
@@ -168,13 +172,13 @@ function Home({ onPlay }: { onPlay: (identity: Identity) => void }) {
   return created ? (
     <CreatedCard identity={created} onPlay={onPlay} />
   ) : (
-    <div className="view-in grid gap-8">
-      <div className="grid gap-3">
-        <h1 className="text-[1.875rem] font-bold leading-tight tracking-tight text-ink">Duel a friend.</h1>
-        <p className="text-base leading-snug text-muted">Two players. One quiz. No mercy.</p>
+    <div className="view-in grid gap-7">
+      <div className="grid gap-2">
+        <h1 className="text-[2rem] font-bold leading-tight tracking-tight text-ink">Duel a friend.</h1>
+        <p className="max-w-80 text-base leading-relaxed text-muted">Same questions. Your own pace.<br />See who knows more.</p>
       </div>
       <form
-        className="grid gap-3"
+        className="grid gap-5"
         onSubmit={(event) => {
           void submit(event)
         }}
@@ -182,21 +186,58 @@ function Home({ onPlay }: { onPlay: (identity: Identity) => void }) {
         <TextField
           label="Your name"
           value={name}
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) => { setName(event.target.value); setError('') }}
           autoComplete="given-name"
+          placeholder="What should we call you?"
           maxLength={24}
+          required
+          disabled={busy}
           error={error || undefined}
         />
-        <label className="grid gap-2 text-sm font-medium text-ink">Questions
-          <select className="rounded-control border border-line bg-surface px-3 py-3" value={mode} onChange={(event) => setMode(Number(event.target.value) as GameMode)}>
-            <option value={20}>20 questions</option>
-            <option value={50}>50 questions</option>
-            <option value={100}>100 questions</option>
-          </select>
-        </label>
-        <Button type="submit" loading={busy} disabled={!name.trim()}>
-          Create game
-        </Button>
+        <fieldset className="grid gap-1 rounded-card border border-line bg-surface px-4 pb-4 pt-3 sm:px-5" disabled={busy}>
+          <legend className="sr-only">Quiz length</legend>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <label htmlFor={countId} className="text-sm font-semibold text-ink">Questions</label>
+              <p id={`${countId}-hint`} className="mt-1 text-sm text-muted">Choose any number from 10–600.</p>
+            </div>
+            <input id={countId} type="number" min={MIN_QUESTIONS} max={MAX_QUESTIONS} step={1} required
+              aria-describedby={`${countId}-hint ${countId}-error`} aria-invalid={!isGameMode(count) || undefined}
+              value={mode} onChange={event => setMode(event.target.value)}
+              className="h-12 w-20 shrink-0 rounded-control border border-accent-track bg-accent-soft pl-2 text-center text-2xl font-semibold tabular-nums text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" />
+          </div>
+          <div className="relative flex h-11 items-center">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 h-1.5 overflow-hidden rounded-full bg-accent-track">
+              <div className="h-full bg-accent" style={{ width: `${isGameMode(count) ? (count - MIN_QUESTIONS) / (MAX_QUESTIONS - MIN_QUESTIONS) * 100 : 0}%` }} />
+            </div>
+            <input type="range" aria-label="Question count slider" min={MIN_QUESTIONS} max={MAX_QUESTIONS} step={1}
+              value={isGameMode(count) ? count : MIN_QUESTIONS} onChange={event => setMode(event.target.value)}
+              className="question-range relative h-11 w-full cursor-pointer appearance-none bg-transparent focus-visible:rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" />
+          </div>
+          <div className="grid grid-cols-4 gap-1 rounded-control bg-raised p-1" role="group" aria-label="Quick question counts">
+            {[10, 50, 100, 600].map(value => (
+              <button key={value} type="button" aria-pressed={count === value} onClick={() => setMode(String(value))}
+                className={cx('min-h-11 rounded-control text-sm font-semibold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent', count === value ? 'bg-surface text-accent-ink ring-1 ring-accent-track' : 'text-muted hover:bg-surface hover:text-ink')}>
+                {value}
+              </button>
+            ))}
+          </div>
+          <p id={`${countId}-error`} className={cx('text-sm text-bad-ink', isGameMode(count) && 'hidden')}>
+            Enter a whole number from 10 to 600.
+          </p>
+        </fieldset>
+        <dl className="grid grid-cols-3 text-center text-sm" aria-label="Scoring rules">
+          <div><dt className="text-muted">Correct</dt><dd className="mt-1 font-semibold tabular-nums text-ink">+1</dd></div>
+          <div><dt className="text-muted">Wrong</dt><dd className="mt-1 font-semibold tabular-nums text-ink">−0.25</dd></div>
+          <div><dt className="text-muted">Don’t know</dt><dd className="mt-1 font-semibold tabular-nums text-ink">0</dd></div>
+        </dl>
+        <div className="grid gap-3">
+          <Button type="submit" loading={busy} disabled={!isGameMode(count)} className="justify-between">
+            {busy ? 'Creating…' : 'Create game'}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-5 w-5"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
+          </Button>
+          <p className="text-center text-sm text-muted">You’ll get a link to invite your friend.</p>
+        </div>
       </form>
     </div>
   )
@@ -344,9 +385,16 @@ function Quiz({ identity, onDone, onHome }: { identity: Identity; onDone: () => 
   const question = questions[questionIndex]
   const revealed = correct !== null
   const won = revealed && picked === correct
+  const skipped = picked === SKIP_ANSWER
   return (
     <div className="grid gap-6">
-      <p className="text-sm text-muted">Question {questionIndex + 1} of {questions.length}</p>
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between gap-3 text-sm text-muted">
+          <p>Question {questionIndex + 1} of {questions.length}</p>
+          <span>+1 / −0.25 points</span>
+        </div>
+        <progress aria-label="Quiz progress" max={questions.length} value={questionIndex} className="quiz-progress h-1.5 w-full" />
+      </div>
       <h1 className="text-2xl font-semibold leading-snug tracking-tight text-ink">{question.q}</h1>
       <div className="grid gap-3" role="group" aria-label="Answers">
         {question.choices.map((choice, index) => (
@@ -362,11 +410,16 @@ function Quiz({ identity, onDone, onHome }: { identity: Identity; onDone: () => 
             }}
           />
         ))}
+        <button type="button" disabled={busy || revealed} aria-pressed={skipped}
+          onClick={() => void choose(SKIP_ANSWER)}
+          className={cx('mt-1 flex min-h-14 items-center justify-between gap-3 rounded-control px-4 text-left text-base font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-default', skipped ? 'bg-accent-soft text-accent-ink' : 'bg-raised text-muted hover:bg-control disabled:hover:bg-raised')}>
+          <span>Don’t know</span><span className="text-sm">0 points</span>
+        </button>
       </div>
-      <p role="status" className={cx('min-h-6 text-base font-medium', won ? 'text-ok-ink' : 'text-bad-ink')}>
+      <p role="status" className={cx('min-h-6 text-base font-medium', skipped ? 'text-muted' : won ? 'text-ok-ink' : 'text-bad-ink')}>
         {revealed && (
           <span key={won ? 'won' : 'lost'} className="mark-pop block">
-            {won ? 'Correct.' : `Not this time — “${question.choices[correct!]}” was right.`}
+            {skipped ? `Skipped · 0 points. “${question.choices[correct!]}” was right.` : won ? 'Correct. +1 point.' : `Not this time · −0.25 points. “${question.choices[correct!]}” was right.`}
           </span>
         )}
         {failed && "Didn't save — check your connection, then pick again."}

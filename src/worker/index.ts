@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { secureHeaders } from 'hono/secure-headers'
-import { getQuestionsForMode } from '../shared/game-config'
+import { getQuestionsForMode, isGameMode, MAX_QUESTIONS, SKIP_ANSWER, CORRECT_POINTS, WRONG_POINTS } from '../shared/game-config'
 import { GAME_ID_PATTERN, MAX_NAME_LENGTH, PLAYER_TOKEN_PATTERN } from '../shared/security'
 import type { Question } from '../shared/question'
 import type { GameMode } from '../shared/game-config'
@@ -93,7 +93,7 @@ export const route = app
     const body = c.get('body')
     if (!validName(body.name)) return c.json({ error: `Use a name between 1 and ${MAX_NAME_LENGTH} characters.` }, 400)
     const mode = body.mode === undefined ? GAME_MODE : body.mode
-    if (mode !== 20 && mode !== 50 && mode !== 100) return c.json({ error: 'Invalid game mode.' }, 400)
+    if (!isGameMode(mode)) return c.json({ error: 'Choose a whole number of questions from 10 to 600.' }, 400)
 
     const id = randomHex(16)
     const token = randomHex(32)
@@ -136,9 +136,9 @@ export const route = app
     if (!token) return c.json({ error: 'Player credentials required.' }, 401)
     const { slot, choice, questionIndex } = c.get('body')
     if (slot !== 1 && slot !== 2) return c.json({ error: 'Unknown player.' }, 400)
-    if (typeof choice !== 'number' || !Number.isInteger(choice) || choice < 0 || choice >= 4)
-      return c.json({ error: 'Pick one of the four answers.' }, 400)
-    if (typeof questionIndex !== 'number' || !Number.isInteger(questionIndex) || questionIndex < 0 || questionIndex >= 100)
+    if (typeof choice !== 'number' || !Number.isInteger(choice) || choice < SKIP_ANSWER || choice >= 4)
+      return c.json({ error: 'Pick an answer or choose Don’t know.' }, 400)
+    if (typeof questionIndex !== 'number' || !Number.isInteger(questionIndex) || questionIndex < 0 || questionIndex >= MAX_QUESTIONS)
       return c.json({ error: 'Invalid question.' }, 400)
 
     const key = `g:${id}:p${slot}` as const
@@ -156,7 +156,7 @@ export const route = app
       return c.json({ error: 'Invalid question.' }, 400)
 
     const correct = questions[questionIndex].correct
-    const score = me.score + (choice === correct ? 1 : 0)
+    const score = me.score + (choice === SKIP_ANSWER ? 0 : choice === correct ? CORRECT_POINTS : WRONG_POINTS)
     const nextIndex = questionIndex + 1
     const done = nextIndex === questions.length
     // shortcut: KV read/modify/write is not atomic; use transactional storage if concurrent answers must be guaranteed.

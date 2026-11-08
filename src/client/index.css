@@ -86,3 +86,31 @@ html {
   background-color: var(--color-accent-track);
   color: var(--color-accent-ink);
 }
+
+.quiz-progress { appearance: none; border: 0; overflow: hidden; border-radius: 999px; }
+.quiz-progress::-webkit-progress-bar { background: var(--color-accent-track); }
+.quiz-progress::-webkit-progress-value { background: var(--color-accent); }
+.quiz-progress::-moz-progress-bar { background: var(--color-accent); }
+
+/* Keep the native range input's keyboard and touch behavior; only replace its chrome. */
+.question-range::-webkit-slider-runnable-track { height: 6px; background: transparent; }
+.question-range::-webkit-slider-thumb {
+  appearance: none;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  margin-top: -9px;
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+.question-range::-moz-range-track { height: 6px; background: transparent; }
+.question-range::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+.question-range:disabled { cursor: default; opacity: 0.5; }
